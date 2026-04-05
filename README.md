@@ -31,7 +31,7 @@ Install this repo with your normal Neovim plugin manager.
 ### `lazy.nvim`
 
 ```lua
-{
+return {
   "onda-lang/onda-nvim",
   config = function()
     require("onda").setup()
