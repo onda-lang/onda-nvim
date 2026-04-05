@@ -4,7 +4,7 @@ This repo contains the Neovim plugin for Onda.
 
 It provides:
 
-- `.onda` filetype detection
+- `.onda` and `.on` filetype detection
 - regex syntax highlighting
 - builtin LSP startup through `onda lsp`
 - `:OndaRunPatch`, which launches the standalone preview window with `onda preview <file>`
@@ -133,13 +133,13 @@ Providing your own `setup(...)` call overrides those defaults.
 
 ## Commands
 
-- `:OndaRunPatch` saves the current `.onda` buffer and opens the standalone preview window
+- `:OndaRunPatch` saves the current `.onda` or `.on` buffer and opens the standalone preview window
 
 ## What happens automatically
 
 Once installed, the plugin:
 
-- detects `.onda` files
+- detects `.onda` and `.on` files
 - starts `onda lsp` when you open an Onda buffer
 - applies Onda syntax highlighting
 
