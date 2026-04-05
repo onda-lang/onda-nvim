@@ -113,7 +113,7 @@ require("onda").setup({
 Notes:
 
 - `server_path` is used for `onda lsp`
-- `preview_path` defaults to `server_path`
+- `preview_path` defaults to `server_path`; this is mainly a development override if you want `:OndaRunPatch` to use a different binary for `onda preview`
 - `preview_args` are appended to `onda preview <file>`
 - `preview_host = "egui"` keeps the default egui preview host
 - `preview_host = "webview"` adds `--webview` to `:OndaRunPatch`
