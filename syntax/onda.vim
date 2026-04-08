@@ -14,7 +14,7 @@ syn match ondaImportPath "^\s*import\s\+\zs[A-Za-z_][A-Za-z0-9_]*\%(/[A-Za-z_][A
 
 syn match ondaNamespaceDecl "^\s*\zsnamespace\ze\>"
 syn match ondaTypeDecl "^\s*\zs\%(proc\|processor\|struct\)\ze\>" nextgroup=ondaTypeName skipwhite
-syn match ondaDefDecl "^\s*\zsdef\ze\>" nextgroup=ondaFunctionName skipwhite
+syn match ondaDefDecl "^\s*\zs\%(def\|event\)\ze\>" nextgroup=ondaFunctionName skipwhite
 syn match ondaConstDecl "\<const\>"
 syn match ondaTypeName "[A-Za-z_][A-Za-z0-9_]*" contained
 syn match ondaFunctionName "[A-Za-z_][A-Za-z0-9_]*" contained
