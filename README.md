@@ -106,6 +106,7 @@ require("onda").setup({
   preview_path = nil,
   preview_args = {},
   preview_host = nil,
+  preview_theme = "auto",
   root_markers = { "Cargo.toml", ".git" },
 })
 ```
@@ -115,9 +116,12 @@ Notes:
 - `server_path` is used for `onda lsp`
 - `preview_path` defaults to `server_path`; this is mainly a development override if you want `:OndaRunPatch` to use a different binary for `onda preview`
 - `preview_args` are appended to `onda preview <file>`
-- `preview_host = "egui"` keeps the default egui preview host
+- `preview_host = "egui"` uses the native egui preview host
 - `preview_host = "webview"` adds `--webview` to `:OndaRunPatch`
-- `preview_host = nil` leaves host selection to the CLI default
+- `preview_host = nil` leaves host selection to the CLI default, which is egui
+- `preview_theme = "auto"` follows the system theme when available
+- `preview_theme = "dark"` forces the dark preview theme
+- `preview_theme = "light"` forces the light preview theme
 - `root_markers` controls project root detection for the builtin LSP startup
 
 Example:
@@ -125,6 +129,7 @@ Example:
 ```lua
 require("onda").setup({
   preview_host = "webview",
+  preview_theme = "dark",
 })
 ```
 

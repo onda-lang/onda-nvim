@@ -6,6 +6,7 @@ local defaults = {
   preview_path = nil,
   preview_args = {},
   preview_host = nil,
+  preview_theme = "auto",
   root_markers = { "Cargo.toml", ".git" },
 }
 
@@ -69,6 +70,10 @@ local function onda_preview_cmd(path)
   local cmd = { state.opts.preview_path or state.opts.server_path, "preview", path }
   if state.opts.preview_host == "webview" then
     table.insert(cmd, "--webview")
+  end
+  if state.opts.preview_theme ~= nil then
+    table.insert(cmd, "--theme")
+    table.insert(cmd, state.opts.preview_theme)
   end
   vim.list_extend(cmd, state.opts.preview_args)
   return cmd
@@ -237,6 +242,14 @@ function M.setup(opts)
   then
     notify("Invalid Onda preview_host; expected 'egui', 'webview', or nil.", vim.log.levels.ERROR)
     state.opts.preview_host = nil
+  end
+  if state.opts.preview_theme ~= nil
+    and state.opts.preview_theme ~= "auto"
+    and state.opts.preview_theme ~= "dark"
+    and state.opts.preview_theme ~= "light"
+  then
+    notify("Invalid Onda preview_theme; expected 'auto', 'dark', 'light', or nil.", vim.log.levels.ERROR)
+    state.opts.preview_theme = "auto"
   end
   if state.initialized then
     return
