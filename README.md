@@ -7,7 +7,7 @@ It provides:
 - `.onda` and `.on` filetype detection
 - regex syntax highlighting
 - builtin LSP startup through `onda lsp`
-- `:OndaRunPatch`, which launches the standalone preview window with `onda preview <file>`
+- `:OndaRunFile`, which launches the standalone run window with `onda run <file>`
 
 ## Requirements
 
@@ -103,10 +103,10 @@ require("onda").setup({
 require("onda").setup({
   server_path = "onda",
   server_args = {},
-  preview_path = nil,
-  preview_args = {},
-  preview_host = nil,
-  preview_theme = "auto",
+  run_path = nil,
+  run_args = {},
+  run_host = nil,
+  run_theme = "auto",
   root_markers = { "Cargo.toml", ".git" },
 })
 ```
@@ -114,22 +114,22 @@ require("onda").setup({
 Notes:
 
 - `server_path` is used for `onda lsp`
-- `preview_path` defaults to `server_path`; this is mainly a development override if you want `:OndaRunPatch` to use a different binary for `onda preview`
-- `preview_args` are appended to `onda preview <file>`
-- `preview_host = "egui"` uses the native egui preview host
-- `preview_host = "webview"` adds `--webview` to `:OndaRunPatch`
-- `preview_host = nil` leaves host selection to the CLI default, which is egui
-- `preview_theme = "auto"` follows the system theme when available
-- `preview_theme = "dark"` forces the dark preview theme
-- `preview_theme = "light"` forces the light preview theme
+- `run_path` defaults to `server_path`; this is mainly a development override if you want `:OndaRunFile` to use a different binary for `onda run`
+- `run_args` are appended to `onda run <file>`
+- `run_host = "egui"` uses the native egui run host
+- `run_host = "webview"` adds `--webview` to `:OndaRunFile`
+- `run_host = nil` leaves host selection to the CLI default, which is egui
+- `run_theme = "auto"` follows the system theme when available
+- `run_theme = "dark"` forces the dark run theme
+- `run_theme = "light"` forces the light run theme
 - `root_markers` controls project root detection for the builtin LSP startup
 
 Example:
 
 ```lua
 require("onda").setup({
-  preview_host = "webview",
-  preview_theme = "dark",
+  run_host = "webview",
+  run_theme = "dark",
 })
 ```
 
@@ -138,7 +138,7 @@ Providing your own `setup(...)` call overrides those defaults.
 
 ## Commands
 
-- `:OndaRunPatch` saves the current `.onda` or `.on` buffer and opens the standalone preview window
+- `:OndaRunFile` saves the current `.onda` or `.on` buffer and opens the standalone run window
 
 ## What happens automatically
 
@@ -154,6 +154,6 @@ If the LSP does not start:
 - check that `onda` runs in a terminal
 - set `server_path` explicitly to the built binary
 
-If `:OndaRunPatch` does not launch:
-- check that `preview_path` or `server_path` points to a working `onda` binary
+If `:OndaRunFile` does not launch:
+- check that `run_path` or `server_path` points to a working `onda` binary
 - make sure the current buffer is saved to disk

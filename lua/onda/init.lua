@@ -3,10 +3,10 @@ local M = {}
 local defaults = {
   server_path = "onda",
   server_args = {},
-  preview_path = nil,
-  preview_args = {},
-  preview_host = nil,
-  preview_theme = "auto",
+  run_path = nil,
+  run_args = {},
+  run_host = nil,
+  run_theme = "auto",
   root_markers = { "Cargo.toml", ".git" },
 }
 
@@ -66,16 +66,16 @@ local function onda_lsp_cmd()
   return cmd
 end
 
-local function onda_preview_cmd(path)
-  local cmd = { state.opts.preview_path or state.opts.server_path, "preview", path }
-  if state.opts.preview_host == "webview" then
+local function onda_run_cmd(path)
+  local cmd = { state.opts.run_path or state.opts.server_path, "run", path }
+  if state.opts.run_host == "webview" then
     table.insert(cmd, "--webview")
   end
-  if state.opts.preview_theme ~= nil then
+  if state.opts.run_theme ~= nil then
     table.insert(cmd, "--theme")
-    table.insert(cmd, state.opts.preview_theme)
+    table.insert(cmd, state.opts.run_theme)
   end
-  vim.list_extend(cmd, state.opts.preview_args)
+  vim.list_extend(cmd, state.opts.run_args)
   return cmd
 end
 
@@ -133,7 +133,7 @@ local function spawn_detached_windows(cmd, cwd)
     end
     if output ~= "" then
       notify(
-        "PowerShell preview launch failed, falling back to direct launch: " .. output,
+        "PowerShell run launch failed, falling back to direct launch: " .. output,
         vim.log.levels.WARN
       )
     end
@@ -165,7 +165,7 @@ local function spawn_detached(cmd, cwd)
     end
     vim.schedule(function()
       notify(
-        ("Onda preview exited with code %d."):format(code),
+        ("Onda run exited with code %d."):format(code),
         vim.log.levels.ERROR
       )
     end)
@@ -196,7 +196,7 @@ function M.start_lsp(bufnr)
   }, { bufnr = bufnr })
 end
 
-function M.run_patch(opts)
+function M.run_file(opts)
   opts = opts or {}
   local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
   if vim.bo[bufnr].filetype ~= "onda" then
@@ -206,7 +206,7 @@ function M.run_patch(opts)
 
   local path = vim.api.nvim_buf_get_name(bufnr)
   if path == "" then
-    notify("Onda preview requires a file on disk.", vim.log.levels.ERROR)
+    notify("Onda run requires a file on disk.", vim.log.levels.ERROR)
     return
   end
 
@@ -217,12 +217,12 @@ function M.run_patch(opts)
       end)
     end)
     if not wrote then
-      notify("Failed to save Onda buffer before starting preview.", vim.log.levels.ERROR)
+      notify("Failed to save Onda buffer before starting run.", vim.log.levels.ERROR)
       return
     end
   end
 
-  local cmd = onda_preview_cmd(path)
+  local cmd = onda_run_cmd(path)
   local cwd = vim.fn.fnamemodify(path, ":p:h")
   if spawn_detached(cmd, cwd) then
     return
@@ -230,26 +230,26 @@ function M.run_patch(opts)
 
   local job_id = vim.fn.jobstart(cmd, { cwd = cwd, detach = true })
   if job_id <= 0 then
-    notify("Failed to start Onda preview.", vim.log.levels.ERROR)
+    notify("Failed to start Onda run.", vim.log.levels.ERROR)
   end
 end
 
 function M.setup(opts)
   state.opts = vim.tbl_deep_extend("force", vim.deepcopy(defaults), state.opts, opts or {})
-  if state.opts.preview_host ~= nil
-    and state.opts.preview_host ~= "egui"
-    and state.opts.preview_host ~= "webview"
+  if state.opts.run_host ~= nil
+    and state.opts.run_host ~= "egui"
+    and state.opts.run_host ~= "webview"
   then
-    notify("Invalid Onda preview_host; expected 'egui', 'webview', or nil.", vim.log.levels.ERROR)
-    state.opts.preview_host = nil
+    notify("Invalid Onda run_host; expected 'egui', 'webview', or nil.", vim.log.levels.ERROR)
+    state.opts.run_host = nil
   end
-  if state.opts.preview_theme ~= nil
-    and state.opts.preview_theme ~= "auto"
-    and state.opts.preview_theme ~= "dark"
-    and state.opts.preview_theme ~= "light"
+  if state.opts.run_theme ~= nil
+    and state.opts.run_theme ~= "auto"
+    and state.opts.run_theme ~= "dark"
+    and state.opts.run_theme ~= "light"
   then
-    notify("Invalid Onda preview_theme; expected 'auto', 'dark', 'light', or nil.", vim.log.levels.ERROR)
-    state.opts.preview_theme = "auto"
+    notify("Invalid Onda run_theme; expected 'auto', 'dark', 'light', or nil.", vim.log.levels.ERROR)
+    state.opts.run_theme = "auto"
   end
   if state.initialized then
     return
@@ -275,10 +275,10 @@ function M.setup(opts)
     end,
   })
 
-  vim.api.nvim_create_user_command("OndaRunPatch", function()
-    M.run_patch()
+  vim.api.nvim_create_user_command("OndaRunFile", function()
+    M.run_file()
   end, {
-    desc = "Run the current Onda patch in the standalone preview window",
+    desc = "Run the current Onda file in the standalone run window",
   })
 end
 
