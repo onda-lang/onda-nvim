@@ -79,8 +79,96 @@ local function onda_run_cmd(path)
   return cmd
 end
 
+local function onda_project_cmd(destination, source)
+  local cmd = { state.opts.run_path or state.opts.server_path, "project", destination }
+  if source then
+    vim.list_extend(cmd, { "--from", source })
+  end
+  return cmd
+end
+
 local function notify(msg, level)
   vim.notify(msg, level or vim.log.levels.INFO, { title = "Onda" })
+end
+
+local function file_extension(path)
+  return vim.fn.fnamemodify(path, ":e"):lower()
+end
+
+local function is_onda_source(path)
+  local extension = file_extension(path)
+  return extension == "onda" or extension == "on"
+end
+
+local function is_onda_project(path)
+  return file_extension(path) == "ondaproject"
+end
+
+local function is_onda_run_input(path)
+  return is_onda_source(path) or is_onda_project(path)
+end
+
+local function save_buffer(bufnr, failure_message)
+  if not vim.bo[bufnr].modified then
+    return true
+  end
+  local wrote = pcall(function()
+    vim.api.nvim_buf_call(bufnr, function()
+      vim.cmd.write()
+    end)
+  end)
+  if wrote then
+    return true
+  end
+  notify(failure_message, vim.log.levels.ERROR)
+  return false
+end
+
+local function absolute_path(path)
+  return vim.fs.normalize(vim.fn.fnamemodify(path, ":p"))
+end
+
+local function request_project_destination(value, default, callback)
+  if value and vim.trim(value) ~= "" then
+    callback(absolute_path(vim.trim(value)))
+    return
+  end
+  vim.ui.input({
+    prompt = "Onda project destination: ",
+    default = default,
+    completion = "dir",
+  }, function(input)
+    if not input or vim.trim(input) == "" then
+      return
+    end
+    callback(absolute_path(vim.trim(input)))
+  end)
+end
+
+local function run_project_command(destination, source, verb)
+  local cmd = onda_project_cmd(destination, source)
+  local ok, error_message = pcall(vim.system, cmd, {
+    cwd = vim.fn.getcwd(),
+    text = true,
+  }, function(result)
+    vim.schedule(function()
+      if result.code == 0 then
+        notify(("%s Onda project: %s"):format(verb, destination))
+        return
+      end
+      local detail = vim.trim(result.stderr or "")
+      if detail == "" then
+        detail = vim.trim(result.stdout or "")
+      end
+      if detail == "" then
+        detail = "exit code " .. tostring(result.code)
+      end
+      notify("Onda project command failed: " .. detail, vim.log.levels.ERROR)
+    end)
+  end)
+  if not ok then
+    notify("Failed to start Onda project command: " .. tostring(error_message), vim.log.levels.ERROR)
+  end
 end
 
 local function apply_highlights()
@@ -196,30 +284,20 @@ function M.start_lsp(bufnr)
   }, { bufnr = bufnr })
 end
 
-function M.run_file(opts)
+function M.run(opts)
   opts = opts or {}
   local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
-  if vim.bo[bufnr].filetype ~= "onda" then
-    notify("Current buffer is not an Onda file.", vim.log.levels.ERROR)
-    return
-  end
-
   local path = vim.api.nvim_buf_get_name(bufnr)
   if path == "" then
     notify("Onda run requires a file on disk.", vim.log.levels.ERROR)
     return
   end
-
-  if vim.bo[bufnr].modified then
-    local wrote = pcall(function()
-      vim.api.nvim_buf_call(bufnr, function()
-        vim.cmd.write()
-      end)
-    end)
-    if not wrote then
-      notify("Failed to save Onda buffer before starting run.", vim.log.levels.ERROR)
-      return
-    end
+  if not is_onda_run_input(path) then
+    notify("Current buffer is not an Onda source or project.", vim.log.levels.ERROR)
+    return
+  end
+  if not save_buffer(bufnr, "Failed to save Onda input before starting run.") then
+    return
   end
 
   local cmd = onda_run_cmd(path)
@@ -232,6 +310,69 @@ function M.run_file(opts)
   if job_id <= 0 then
     notify("Failed to start Onda run.", vim.log.levels.ERROR)
   end
+end
+
+function M.create_project(opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
+  local current_path = vim.api.nvim_buf_get_name(bufnr)
+  local source = is_onda_source(current_path) and current_path or nil
+
+  local function create(selected_source)
+    if selected_source
+      and not save_buffer(bufnr, "Failed to save Onda source before creating project.")
+    then
+      return
+    end
+    local default_name = selected_source
+        and vim.fn.fnamemodify(selected_source, ":t:r")
+      or "onda-project"
+    local default_dir = selected_source
+        and vim.fn.fnamemodify(selected_source, ":p:h")
+      or vim.fn.getcwd()
+    local default = join_path(default_dir, default_name)
+    request_project_destination(opts.args, default, function(destination)
+      run_project_command(destination, selected_source, "Created")
+    end)
+  end
+
+  if not source then
+    create(nil)
+    return
+  end
+  vim.ui.select({
+    { label = "From current source", source = source },
+    { label = "Empty project" },
+  }, {
+    prompt = "Create Onda project",
+    format_item = function(item)
+      return item.label
+    end,
+  }, function(choice)
+    if choice then
+      create(choice.source)
+    end
+  end)
+end
+
+function M.save_as_project(opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
+  local source = vim.api.nvim_buf_get_name(bufnr)
+  if not is_onda_source(source) then
+    notify("Current buffer is not an Onda source file.", vim.log.levels.ERROR)
+    return
+  end
+  if not save_buffer(bufnr, "Failed to save Onda source before exporting project.") then
+    return
+  end
+
+  local source_dir = vim.fn.fnamemodify(source, ":p:h")
+  local source_name = vim.fn.fnamemodify(source, ":t:r")
+  local default = join_path(source_dir, source_name .. "-project")
+  request_project_destination(opts.args, default, function(destination)
+    run_project_command(destination, source, "Saved")
+  end)
 end
 
 function M.setup(opts)
@@ -275,10 +416,26 @@ function M.setup(opts)
     end,
   })
 
-  vim.api.nvim_create_user_command("OndaRunFile", function()
-    M.run_file()
+  vim.api.nvim_create_user_command("OndaRun", function(command)
+    M.run(command)
   end, {
-    desc = "Run the current Onda file in the standalone run window",
+    desc = "Run the current Onda source or project in the standalone run window",
+  })
+
+  vim.api.nvim_create_user_command("OndaCreateProject", function(command)
+    M.create_project(command)
+  end, {
+    nargs = "?",
+    complete = "dir",
+    desc = "Create an empty Onda project or package the current source",
+  })
+
+  vim.api.nvim_create_user_command("OndaSaveAsProject", function(command)
+    M.save_as_project(command)
+  end, {
+    nargs = "?",
+    complete = "dir",
+    desc = "Package the current Onda source as a project",
   })
 end
 

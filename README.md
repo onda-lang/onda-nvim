@@ -4,15 +4,16 @@ This repo contains the Neovim plugin for Onda.
 
 It provides:
 
-- `.onda` and `.on` filetype detection
+- `.onda`, `.on`, and `.ondaproject` filetype detection
 - regex syntax highlighting
 - builtin LSP startup through `onda lsp`
-- `:OndaRunFile`, which launches the standalone run window with `onda run <file>`
+- `:OndaRun`, which launches the standalone run window for a source or project
+- project creation and source-only project export through `onda project`
 
 ## Requirements
 
 - Neovim 0.10 or newer
-- Onda 0.5.0 or newer
+- Onda 0.7.0 or newer
 - an `onda` executable available on `PATH`, or an explicit configured path
 
 If you need to build the CLI locally:
@@ -115,10 +116,10 @@ require("onda").setup({
 Notes:
 
 - `server_path` is used for `onda lsp`
-- `run_path` defaults to `server_path`; this is mainly a development override if you want `:OndaRunFile` to use a different binary for `onda run`
+- `run_path` defaults to `server_path`; this is mainly a development override for the Onda CLI commands
 - `run_args` are appended to `onda run <file>`
 - `run_host = "egui"` uses the native egui run host
-- `run_host = "webview"` adds `--webview` to `:OndaRunFile`
+- `run_host = "webview"` adds `--webview` to `:OndaRun`
 - `run_host = nil` leaves host selection to the CLI default, which is egui
 - `run_theme = "auto"` follows the system theme when available
 - `run_theme = "dark"` forces the dark run theme
@@ -139,13 +140,20 @@ Providing your own `setup(...)` call overrides those defaults.
 
 ## Commands
 
-- `:OndaRunFile` saves the current `.onda` or `.on` buffer and opens the standalone run window
+- `:OndaRun` saves and runs the current `.onda`, `.on`, or `.ondaproject` buffer
+- `:OndaCreateProject [destination]` creates an empty project or packages the current Onda source
+- `:OndaSaveAsProject [destination]` packages the current Onda source as a portable project
+
+When a destination is omitted, the project commands prompt for one through `vim.ui.input`.
+`:OndaCreateProject` also asks whether to create an empty project or package the current source when
+invoked from an Onda source buffer. Buffer bindings selected in the standalone run window remain
+owned by that window; use its **Save as project** action to include them.
 
 ## What happens automatically
 
 Once installed, the plugin:
 
-- detects `.onda` and `.on` files
+- detects `.onda`, `.on`, and `.ondaproject` files
 - starts `onda lsp` when you open an Onda buffer
 - applies Onda syntax highlighting
 
@@ -155,6 +163,6 @@ If the LSP does not start:
 - check that `onda` runs in a terminal
 - set `server_path` explicitly to the built binary
 
-If `:OndaRunFile` does not launch:
+If `:OndaRun` does not launch:
 - check that `run_path` or `server_path` points to a working `onda` binary
 - make sure the current buffer is saved to disk
