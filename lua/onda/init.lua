@@ -15,6 +15,21 @@ local state = {
   initialized = false,
 }
 
+local semantic_highlights = {
+  enumMember = "Constant",
+  variable = "@variable",
+  port = "@variable.parameter",
+  parameter = "@variable.parameter",
+  ["function"] = "Function",
+  type = "Type",
+  namespace = "Include",
+  state = "@variable.parameter",
+  keyword = "@keyword",
+  number = "@number",
+  event = "Function",
+  delegate = "Function",
+}
+
 local function is_windows()
   return vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1
 end
@@ -172,13 +187,9 @@ local function run_project_command(destination, source, verb)
 end
 
 local function apply_highlights()
-  local set_hl = vim.api.nvim_set_hl
-  set_hl(0, "@lsp.type.port.onda", { default = true, link = "@lsp.type.parameter" })
-  set_hl(0, "@lsp.type.state.onda", { default = true, link = "@variable.parameter" })
-  set_hl(0, "@lsp.type.enumMember.onda", { default = true, link = "Constant" })
-  set_hl(0, "@lsp.type.function.onda", { default = true, link = "Function" })
-  set_hl(0, "@lsp.type.type.onda", { default = true, link = "Type" })
-  set_hl(0, "@lsp.type.namespace.onda", { default = true, link = "Include" })
+  for token, link in pairs(semantic_highlights) do
+    vim.api.nvim_set_hl(0, "@lsp.type." .. token .. ".onda", { default = true, link = link })
+  end
 end
 
 local function powershell_quote(value)

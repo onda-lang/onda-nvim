@@ -13,7 +13,7 @@ It provides:
 ## Requirements
 
 - Neovim 0.10 or newer
-- Onda 0.7.0 or newer
+- Onda 0.8.0 or newer
 - an `onda` executable available on `PATH`, or an explicit configured path
 
 If you need to build the CLI locally:
