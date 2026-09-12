@@ -106,6 +106,17 @@ local function notify(msg, level)
   vim.notify(msg, level or vim.log.levels.INFO, { title = "Onda" })
 end
 
+local function ensure_executable(path)
+  if vim.fn.executable(path) == 1 then
+    return true
+  end
+  notify(
+    'Onda executable was not found. Install onda, add it to PATH, or configure server_path/run_path in require("onda").setup().',
+    vim.log.levels.ERROR
+  )
+  return false
+end
+
 local function file_extension(path)
   return vim.fn.fnamemodify(path, ":e"):lower()
 end
@@ -162,6 +173,9 @@ end
 
 local function run_project_command(destination, source, verb)
   local cmd = onda_project_cmd(destination, source)
+  if not ensure_executable(cmd[1]) then
+    return
+  end
   local ok, error_message = pcall(vim.system, cmd, {
     cwd = vim.fn.getcwd(),
     text = true,
@@ -287,9 +301,13 @@ function M.start_lsp(bufnr)
   end
 
   local name = vim.api.nvim_buf_get_name(bufnr)
+  local cmd = onda_lsp_cmd()
+  if not ensure_executable(cmd[1]) then
+    return
+  end
   vim.lsp.start({
     name = "onda",
-    cmd = onda_lsp_cmd(),
+    cmd = cmd,
     root_dir = find_root(name),
     single_file_support = true,
   }, { bufnr = bufnr })
@@ -307,11 +325,14 @@ function M.run(opts)
     notify("Current buffer is not an Onda source or project.", vim.log.levels.ERROR)
     return
   end
+  local cmd = onda_run_cmd(path)
+  if not ensure_executable(cmd[1]) then
+    return
+  end
   if not save_buffer(bufnr, "Failed to save Onda input before starting run.") then
     return
   end
 
-  local cmd = onda_run_cmd(path)
   local cwd = vim.fn.fnamemodify(path, ":p:h")
   if spawn_detached(cmd, cwd) then
     return
