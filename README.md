@@ -1,6 +1,8 @@
-# Onda Neovim Support
+<h1>
+  <img src="assets/svg/onda-logo-dark.svg" alt="onda logo" width="40" align="absmiddle" /> Onda Neovim plugin
+</h1>
 
-This repo contains the Neovim plugin for Onda.
+This repo contains the Neovim plugin for the [Onda](https://onda-lang.org) audio programming language.
 
 It provides:
 
@@ -15,16 +17,6 @@ It provides:
 - Neovim 0.10 or newer
 - Onda 0.8.0 or newer
 - an `onda` executable available on `PATH`, or an explicit configured path
-
-If you need to build the CLI locally:
-
-```bash
-cargo build -p onda_cli --release
-```
-
-That produces the binary at:
-- Windows: `target/release/onda.exe`
-- macOS/Linux: `target/release/onda`
 
 ## Install
 
@@ -148,14 +140,6 @@ When a destination is omitted, the project commands prompt for one through `vim.
 `:OndaCreateProject` also asks whether to create an empty project or package the current source when
 invoked from an Onda source buffer. Buffer bindings selected in the standalone run window remain
 owned by that window; use its **Save as project** action to include them.
-
-## What happens automatically
-
-Once installed, the plugin:
-
-- detects `.onda`, `.on`, and `.ondaproject` files
-- starts `onda lsp` when you open an Onda buffer
-- applies Onda syntax highlighting
 
 ## Troubleshooting
 
