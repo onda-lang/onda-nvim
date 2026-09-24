@@ -1,5 +1,5 @@
 <h1>
-  <img src="assets/svg/onda-logo-dark.svg" alt="onda logo" width="40" align="absmiddle" /> Onda Neovim plugin
+  <img src="assets/svg/onda-logo-dark-circle.svg" alt="onda logo" width="40" align="absmiddle" /> Onda Neovim plugin
 </h1>
 
 This repo contains the Neovim plugin for the [Onda](https://onda-lang.org) audio programming language.
