@@ -81,8 +81,11 @@ local function onda_lsp_cmd()
   return cmd
 end
 
-local function onda_run_cmd(path)
+local function onda_run_cmd(path, fast_math)
   local cmd = { state.opts.run_path or state.opts.server_path, "run", path }
+  if fast_math then
+    table.insert(cmd, "--fast-math")
+  end
   if state.opts.run_host == "webview" then
     table.insert(cmd, "--webview")
   end
@@ -325,7 +328,7 @@ function M.run(opts)
     notify("Current buffer is not an Onda source or project.", vim.log.levels.ERROR)
     return
   end
-  local cmd = onda_run_cmd(path)
+  local cmd = onda_run_cmd(path, opts.fast_math)
   if not ensure_executable(cmd[1]) then
     return
   end
@@ -452,6 +455,12 @@ function M.setup(opts)
     M.run(command)
   end, {
     desc = "Run the current Onda source or project in the standalone run window",
+  })
+
+  vim.api.nvim_create_user_command("OndaRunWithFastMath", function()
+    M.run({ fast_math = true })
+  end, {
+    desc = "Run the current Onda source or project with fast math for this session",
   })
 
   vim.api.nvim_create_user_command("OndaCreateProject", function(command)

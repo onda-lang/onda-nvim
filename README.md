@@ -133,8 +133,14 @@ Providing your own `setup(...)` call overrides those defaults.
 ## Commands
 
 - `:OndaRun` saves and runs the current `.onda`, `.on`, or `.ondaproject` buffer
+- `:OndaRunWithFastMath` saves and runs the current buffer with `--fast-math` for that session
 - `:OndaCreateProject [destination]` creates an empty project or packages the current Onda source
 - `:OndaSaveAsProject [destination]` packages the current Onda source as a portable project
+
+`:OndaRunWithFastMath` works with either run host and does not change your
+configuration. Fast math allows floating-point optimizations that can change
+numerical results. Run `:OndaRun` to start a new session with normal math. From Lua,
+use `require("onda").run({ fast_math = true })` for a single fast math run.
 
 When a destination is omitted, the project commands prompt for one through `vim.ui.input`.
 `:OndaCreateProject` also asks whether to create an empty project or package the current source when
