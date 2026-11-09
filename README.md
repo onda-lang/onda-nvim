@@ -156,3 +156,9 @@ If the LSP does not start:
 If `:OndaRun` does not launch:
 - check that `run_path` or `server_path` points to a working `onda` binary
 - make sure the current buffer is saved to disk
+
+## License
+
+Starting with the Onda 0.9.0 release, Onda-authored code in this repository is licensed
+under the [Apache License, Version 2.0](LICENSE). Third-party components retain their
+respective licenses.
