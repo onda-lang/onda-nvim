@@ -2,20 +2,12 @@
   <img src="assets/svg/onda-logo-dark-circle.svg" alt="onda logo" width="40" align="absmiddle" /> Onda Neovim plugin
 </h1>
 
-This repo contains the Neovim plugin for the [Onda](https://onda-lang.org) audio programming language.
-
-It provides:
-
-- `.onda`, `.on`, and `.ondaproject` filetype detection
-- regex syntax highlighting
-- builtin LSP startup through `onda lsp`
-- `:OndaRun`, which launches the standalone run window for a source or project
-- project creation and source-only project export through `onda project`
+Neovim plugin for the [Onda](https://onda-lang.org) audio programming language.
 
 ## Requirements
 
 - Neovim 0.10 or newer
-- Onda 0.8.0 or newer
+- Onda 0.9.0 or newer
 - an `onda` executable available on `PATH`, or an explicit configured path
 
 ## Install
@@ -33,61 +25,16 @@ return {
 }
 ```
 
+Releases use semantic version tags, starting with `v0.1.0`; see the
+[changelog](CHANGELOG.md). Add `version = "^0.1.0"` to the plugin spec to follow
+the `0.1.x` release series. With lazy.nvim's default version settings, omitting
+it follows `main`.
+
 If `onda` is not already on `PATH`, configure it explicitly:
 
 ```lua
 require("onda").setup({
-  server_path = "C:/path/to/onda.exe",
-})
-```
-
-macOS/Linux example:
-
-```lua
-require("onda").setup({
-  server_path = "/path/to/onda",
-})
-```
-
-### Manual install without a plugin manager
-
-Copy or symlink this repo into a standard `pack` location.
-
-You can also copy the contents of this repo directly into your Neovim config/runtime path.
-That works because this folder already has the normal Neovim runtime layout:
-- `ftdetect/`
-- `ftplugin/`
-- `lua/`
-- `plugin/`
-- `syntax/`
-
-Typical targets:
-- Windows: `%LOCALAPPDATA%\\nvim\\`
-- macOS/Linux: `~/.config/nvim/`
-
-For example, copying the contents of this repo into `~/.config/nvim/` will install the plugin without a plugin manager.
-
-macOS/Linux example:
-
-```bash
-mkdir -p ~/.local/share/nvim/site/pack/onda/start
-ln -s /path/to/onda-nvim ~/.local/share/nvim/site/pack/onda/start/onda.nvim
-```
-
-Windows PowerShell example:
-
-```powershell
-New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\nvim-data\site\pack\onda\start" | Out-Null
-New-Item -ItemType SymbolicLink `
-  -Path "$env:LOCALAPPDATA\nvim-data\site\pack\onda\start\onda.nvim" `
-  -Target "C:\path\to\onda-nvim"
-```
-
-Then add your configuration in `init.lua`:
-
-```lua
-require("onda").setup({
-  server_path = "onda",
+  exec_path = "/path/to/onda",
 })
 ```
 
@@ -95,40 +42,18 @@ require("onda").setup({
 
 ```lua
 require("onda").setup({
-  server_path = "onda",
+  exec_path = "onda",
   server_args = {},
-  run_path = nil,
   run_args = {},
-  run_host = nil,
   run_theme = "auto",
-  root_markers = { "Cargo.toml", ".git" },
 })
 ```
 
-Notes:
-
-- `server_path` is used for `onda lsp`
-- `run_path` defaults to `server_path`; this is mainly a development override for the Onda CLI commands
+- `exec_path` selects the Onda executable for LSP, run, and project commands
 - `run_args` are appended to `onda run <file>`
-- `run_host = "egui"` uses the native egui run host
-- `run_host = "webview"` adds `--webview` to `:OndaRun`
-- `run_host = nil` leaves host selection to the CLI default, which is egui
-- `run_theme = "auto"` follows the system theme when available
+- `run_theme = "auto"` lets the CLI detect the system theme at startup
 - `run_theme = "dark"` forces the dark run theme
 - `run_theme = "light"` forces the light run theme
-- `root_markers` controls project root detection for the builtin LSP startup
-
-Example:
-
-```lua
-require("onda").setup({
-  run_host = "webview",
-  run_theme = "dark",
-})
-```
-
-If the plugin is on your runtimepath, it auto-calls `require("onda").setup()` with defaults.
-Providing your own `setup(...)` call overrides those defaults.
 
 ## Commands
 
@@ -136,29 +61,3 @@ Providing your own `setup(...)` call overrides those defaults.
 - `:OndaRunWithFastMath` saves and runs the current buffer with `--fast-math` for that session
 - `:OndaCreateProject [destination]` creates an empty project or packages the current Onda source
 - `:OndaSaveAsProject [destination]` packages the current Onda source as a portable project
-
-`:OndaRunWithFastMath` works with either run host and does not change your
-configuration. Fast math allows floating-point optimizations that can change
-numerical results. Run `:OndaRun` to start a new session with normal math. From Lua,
-use `require("onda").run({ fast_math = true })` for a single fast math run.
-
-When a destination is omitted, the project commands prompt for one through `vim.ui.input`.
-`:OndaCreateProject` also asks whether to create an empty project or package the current source when
-invoked from an Onda source buffer. Buffer bindings selected in the standalone run window remain
-owned by that window; use its **Save as project** action to include them.
-
-## Troubleshooting
-
-If the LSP does not start:
-- check that `onda` runs in a terminal
-- set `server_path` explicitly to the built binary
-
-If `:OndaRun` does not launch:
-- check that `run_path` or `server_path` points to a working `onda` binary
-- make sure the current buffer is saved to disk
-
-## License
-
-Starting with the Onda 0.9.0 release, Onda-authored code in this repository is licensed
-under the [Apache License, Version 2.0](LICENSE). Third-party components retain their
-respective licenses.

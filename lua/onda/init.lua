@@ -1,13 +1,10 @@
 local M = {}
 
 local defaults = {
-  server_path = "onda",
+  exec_path = "onda",
   server_args = {},
-  run_path = nil,
   run_args = {},
-  run_host = nil,
   run_theme = "auto",
-  root_markers = { "Cargo.toml", ".git" },
 }
 
 local state = {
@@ -34,62 +31,24 @@ local function is_windows()
   return vim.fn.has("win32") == 1 or vim.fn.has("win64") == 1
 end
 
-local function path_exists(path)
-  local stat = (vim.uv or vim.loop).fs_stat(path)
-  return stat ~= nil
-end
-
 local function join_path(...)
   local sep = is_windows() and "\\" or "/"
   return table.concat({ ... }, sep)
 end
 
-local function parent_dir(path)
-  local parent = vim.fn.fnamemodify(path, ":h")
-  if parent == path then
-    return nil
-  end
-  return parent
-end
-
-local function find_root(path)
-  local dir
-  if path == "" then
-    dir = vim.fn.getcwd()
-  elseif path_exists(path) then
-    dir = vim.fn.fnamemodify(path, ":p:h")
-  else
-    dir = vim.fn.fnamemodify(path, ":p")
-  end
-
-  while dir and dir ~= "" do
-    for _, marker in ipairs(state.opts.root_markers) do
-      if path_exists(join_path(dir, marker)) then
-        return dir
-      end
-    end
-    dir = parent_dir(dir)
-  end
-
-  return vim.fn.getcwd()
-end
-
 local function onda_lsp_cmd()
-  local cmd = { state.opts.server_path }
+  local cmd = { state.opts.exec_path }
   vim.list_extend(cmd, state.opts.server_args)
   table.insert(cmd, "lsp")
   return cmd
 end
 
 local function onda_run_cmd(path, fast_math)
-  local cmd = { state.opts.run_path or state.opts.server_path, "run", path }
+  local cmd = { state.opts.exec_path, "run", path }
   if fast_math then
     table.insert(cmd, "--fast-math")
   end
-  if state.opts.run_host == "webview" then
-    table.insert(cmd, "--webview")
-  end
-  if state.opts.run_theme ~= nil then
+  if state.opts.run_theme ~= nil and state.opts.run_theme ~= "auto" then
     table.insert(cmd, "--theme")
     table.insert(cmd, state.opts.run_theme)
   end
@@ -98,7 +57,7 @@ local function onda_run_cmd(path, fast_math)
 end
 
 local function onda_project_cmd(destination, source)
-  local cmd = { state.opts.run_path or state.opts.server_path, "project", destination }
+  local cmd = { state.opts.exec_path, "project", destination }
   if source then
     vim.list_extend(cmd, { "--from", source })
   end
@@ -114,7 +73,7 @@ local function ensure_executable(path)
     return true
   end
   notify(
-    'Onda executable was not found. Install onda, add it to PATH, or configure server_path/run_path in require("onda").setup().',
+    'Onda executable was not found. Install onda, add it to PATH, or configure exec_path in require("onda").setup().',
     vim.log.levels.ERROR
   )
   return false
@@ -303,7 +262,6 @@ function M.start_lsp(bufnr)
     return
   end
 
-  local name = vim.api.nvim_buf_get_name(bufnr)
   local cmd = onda_lsp_cmd()
   if not ensure_executable(cmd[1]) then
     return
@@ -311,7 +269,7 @@ function M.start_lsp(bufnr)
   vim.lsp.start({
     name = "onda",
     cmd = cmd,
-    root_dir = find_root(name),
+    root_dir = vim.fn.getcwd(),
     single_file_support = true,
   }, { bufnr = bufnr })
 end
@@ -412,13 +370,6 @@ end
 
 function M.setup(opts)
   state.opts = vim.tbl_deep_extend("force", vim.deepcopy(defaults), state.opts, opts or {})
-  if state.opts.run_host ~= nil
-    and state.opts.run_host ~= "egui"
-    and state.opts.run_host ~= "webview"
-  then
-    notify("Invalid Onda run_host; expected 'egui', 'webview', or nil.", vim.log.levels.ERROR)
-    state.opts.run_host = nil
-  end
   if state.opts.run_theme ~= nil
     and state.opts.run_theme ~= "auto"
     and state.opts.run_theme ~= "dark"
