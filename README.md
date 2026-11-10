@@ -25,6 +25,11 @@ return {
 }
 ```
 
+Releases use semantic version tags, starting with `v0.1.0`; see the
+[changelog](CHANGELOG.md). Add `version = "^0.1.0"` to the plugin spec to follow
+the `0.1.x` release series. With lazy.nvim's default version settings, omitting
+it follows `main`.
+
 If `onda` is not already on `PATH`, configure it explicitly:
 
 ```lua
